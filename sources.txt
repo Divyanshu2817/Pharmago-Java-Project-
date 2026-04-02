@@ -1,0 +1,13 @@
+C:\Users\ASUS\OneDrive\Documents\pro\src\main\java\com\pharmago\PharmagoApplication.java
+C:\Users\ASUS\OneDrive\Documents\pro\src\main\java\com\pharmago\config\DatabaseConfig.java
+C:\Users\ASUS\OneDrive\Documents\pro\src\main\java\com\pharmago\dao\MedicineDao.java
+C:\Users\ASUS\OneDrive\Documents\pro\src\main\java\com\pharmago\dao\PurchaseDao.java
+C:\Users\ASUS\OneDrive\Documents\pro\src\main\java\com\pharmago\dao\SaleDao.java
+C:\Users\ASUS\OneDrive\Documents\pro\src\main\java\com\pharmago\model\BusinessSummary.java
+C:\Users\ASUS\OneDrive\Documents\pro\src\main\java\com\pharmago\model\Medicine.java
+C:\Users\ASUS\OneDrive\Documents\pro\src\main\java\com\pharmago\model\Purchase.java
+C:\Users\ASUS\OneDrive\Documents\pro\src\main\java\com\pharmago\model\Sale.java
+C:\Users\ASUS\OneDrive\Documents\pro\src\main\java\com\pharmago\service\InventoryService.java
+C:\Users\ASUS\OneDrive\Documents\pro\src\main\java\com\pharmago\ui\PharmaGoDesktopUI.java
+C:\Users\ASUS\OneDrive\Documents\pro\src\main\java\com\pharmago\util\ConsoleFormatter.java
+C:\Users\ASUS\OneDrive\Documents\pro\src\main\java\com\pharmago\util\InputUtil.java
