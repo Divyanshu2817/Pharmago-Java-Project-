@@ -44,8 +44,8 @@ pharmago/
 ## Database Setup
 
 1. Create the database in MySQL.
-2. Run `database/schema.sql`
-3. Optionally run `database/seed.sql`
+2. Run `database/schema.sql`.
+3. Optionally run `database/seed.sql`.
 4. Copy `src/main/resources/application.example.properties` to `src/main/resources/application.properties`
 5. Update your MySQL username and password
 

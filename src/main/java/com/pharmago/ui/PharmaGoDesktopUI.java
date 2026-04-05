@@ -432,8 +432,8 @@ public class PharmaGoDesktopUI {
     private JButton createPrimaryButton(String text) {
         JButton button = new JButton(text);
         button.setFocusPainted(false);
-        button.setBackground(PRIMARY);
-        button.setForeground(Color.WHITE);
+        button.setBackground(new Color(191, 219, 254));
+        button.setForeground(new Color(15, 23, 42));
         button.setFont(new Font("Segoe UI", Font.BOLD, 13));
         return button;
     }
