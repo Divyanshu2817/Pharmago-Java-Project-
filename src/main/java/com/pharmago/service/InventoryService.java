@@ -29,6 +29,13 @@ public class InventoryService {
         medicineDao.addMedicine(medicine);
     }
 
+    public void deleteMedicine(int medicineId) throws SQLException {
+        if (purchaseDao.countByMedicineId(medicineId) > 0 || saleDao.countByMedicineId(medicineId) > 0) {
+            throw new IllegalArgumentException("Delete purchase and sales history for this medicine first.");
+        }
+        medicineDao.deleteMedicine(medicineId);
+    }
+
     public List<Medicine> getAllMedicines() throws SQLException {
         return medicineDao.getAllMedicines();
     }
@@ -60,8 +67,31 @@ public class InventoryService {
         return purchaseDao.getAllPurchases();
     }
 
+    public void deletePurchase(int purchaseId) throws SQLException {
+        Purchase purchase = purchaseDao.findPurchaseById(purchaseId);
+        if (purchase == null) {
+            throw new IllegalArgumentException("Purchase record not found.");
+        }
+        Medicine medicine = getMedicineOrThrow(purchase.getMedicineId());
+        if (medicine.getStockQuantity() < purchase.getQuantity()) {
+            throw new IllegalArgumentException("This purchase cannot be deleted because the stock has already been consumed.");
+        }
+        purchaseDao.deletePurchase(purchaseId);
+        medicineDao.updateStock(medicine.getMedicineId(), medicine.getStockQuantity() - purchase.getQuantity());
+    }
+
     public List<Sale> getAllSales() throws SQLException {
         return saleDao.getAllSales();
+    }
+
+    public void deleteSale(int saleId) throws SQLException {
+        Sale sale = saleDao.findSaleById(saleId);
+        if (sale == null) {
+            throw new IllegalArgumentException("Sale record not found.");
+        }
+        Medicine medicine = getMedicineOrThrow(sale.getMedicineId());
+        saleDao.deleteSale(saleId);
+        medicineDao.updateStock(medicine.getMedicineId(), medicine.getStockQuantity() + sale.getQuantity());
     }
 
     public BusinessSummary getBusinessSummary() throws SQLException {

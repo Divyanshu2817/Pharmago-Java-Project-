@@ -113,6 +113,15 @@ public class MedicineDao {
         }
     }
 
+    public void deleteMedicine(int medicineId) throws SQLException {
+        String sql = "DELETE FROM medicines WHERE medicine_id = ?";
+        try (Connection connection = databaseConfig.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, medicineId);
+            statement.executeUpdate();
+        }
+    }
+
     public int countMedicines() throws SQLException {
         String sql = "SELECT COUNT(*) FROM medicines";
         try (Connection connection = databaseConfig.getConnection();

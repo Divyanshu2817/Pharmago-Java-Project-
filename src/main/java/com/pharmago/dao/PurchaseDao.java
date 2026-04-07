@@ -66,6 +66,56 @@ public class PurchaseDao {
         return purchases;
     }
 
+    public Purchase findPurchaseById(int purchaseId) throws SQLException {
+        String sql = """
+                SELECT p.purchase_id, p.medicine_id, m.name AS medicine_name, p.supplier_name, p.quantity,
+                       p.purchase_price, p.purchase_date, p.batch_no
+                FROM purchases p
+                JOIN medicines m ON p.medicine_id = m.medicine_id
+                WHERE p.purchase_id = ?
+                """;
+        try (Connection connection = databaseConfig.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, purchaseId);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    Purchase purchase = new Purchase();
+                    purchase.setPurchaseId(resultSet.getInt("purchase_id"));
+                    purchase.setMedicineId(resultSet.getInt("medicine_id"));
+                    purchase.setMedicineName(resultSet.getString("medicine_name"));
+                    purchase.setSupplierName(resultSet.getString("supplier_name"));
+                    purchase.setQuantity(resultSet.getInt("quantity"));
+                    purchase.setPurchasePrice(resultSet.getBigDecimal("purchase_price"));
+                    purchase.setPurchaseDate(resultSet.getDate("purchase_date").toLocalDate());
+                    purchase.setBatchNo(resultSet.getString("batch_no"));
+                    return purchase;
+                }
+            }
+        }
+        return null;
+    }
+
+    public void deletePurchase(int purchaseId) throws SQLException {
+        String sql = "DELETE FROM purchases WHERE purchase_id = ?";
+        try (Connection connection = databaseConfig.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, purchaseId);
+            statement.executeUpdate();
+        }
+    }
+
+    public int countByMedicineId(int medicineId) throws SQLException {
+        String sql = "SELECT COUNT(*) FROM purchases WHERE medicine_id = ?";
+        try (Connection connection = databaseConfig.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, medicineId);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                resultSet.next();
+                return resultSet.getInt(1);
+            }
+        }
+    }
+
     public BigDecimal totalPurchaseValue() throws SQLException {
         String sql = "SELECT COALESCE(SUM(quantity * purchase_price), 0) FROM purchases";
         try (Connection connection = databaseConfig.getConnection();

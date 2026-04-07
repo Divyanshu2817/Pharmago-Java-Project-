@@ -32,6 +32,8 @@ import javax.swing.SwingConstants;
 import javax.swing.SwingWorker;
 import javax.swing.UIManager;
 import javax.swing.border.EmptyBorder;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableModel;
 
 import com.pharmago.model.BusinessSummary;
@@ -47,6 +49,7 @@ public class PharmaGoDesktopUI {
     private static final Color PRIMARY = new Color(14, 116, 144);
     private static final Color ACCENT = new Color(19, 78, 94);
     private static final Color ALERT = new Color(190, 24, 93);
+    private static final Color DANGER = new Color(185, 28, 28);
 
     private final InventoryService inventoryService;
 
@@ -64,6 +67,8 @@ public class PharmaGoDesktopUI {
     private JTable salesTable;
     private JTable lowStockTable;
     private JTable expiryTable;
+    private JTextField medicineSearchField;
+    private List<Medicine> cachedMedicines = List.of();
 
     private JTextField codeField;
     private JTextField nameField;
@@ -258,9 +263,43 @@ public class PharmaGoDesktopUI {
         panel.setBackground(PANEL_BG);
 
         medicineTable = createTable(new String[]{"ID", "Code", "Name", "Category", "Manufacturer", "Price", "Stock", "Reorder", "Expiry"});
+        panel.add(buildInventoryTopBar(), BorderLayout.NORTH);
         panel.add(wrapTable(medicineTable), BorderLayout.CENTER);
         panel.add(buildMedicineForm(), BorderLayout.SOUTH);
         return panel;
+    }
+
+    private JComponent buildInventoryTopBar() {
+        JPanel topBar = new JPanel(new BorderLayout(12, 0));
+        topBar.setOpaque(false);
+
+        JPanel searchPanel = new JPanel(new BorderLayout(8, 0));
+        searchPanel.setOpaque(false);
+        JLabel searchLabel = new JLabel("Search Medicine:");
+        searchLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        medicineSearchField = new JTextField();
+        medicineSearchField.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                filterMedicineTable();
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                filterMedicineTable();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                filterMedicineTable();
+            }
+        });
+        searchPanel.add(searchLabel, BorderLayout.WEST);
+        searchPanel.add(medicineSearchField, BorderLayout.CENTER);
+
+        topBar.add(searchPanel, BorderLayout.CENTER);
+        topBar.add(createDeleteBar("Delete Selected Medicine", event -> handleDeleteMedicine()), BorderLayout.EAST);
+        return topBar;
     }
 
     private JComponent buildPurchasesTab() {
@@ -268,6 +307,7 @@ public class PharmaGoDesktopUI {
         panel.setBackground(PANEL_BG);
 
         purchaseTable = createTable(new String[]{"ID", "Medicine", "Supplier", "Qty", "Price", "Date", "Batch"});
+        panel.add(createDeleteBar("Delete Selected Purchase", event -> handleDeletePurchase()), BorderLayout.NORTH);
         panel.add(wrapTable(purchaseTable), BorderLayout.CENTER);
         panel.add(buildPurchaseForm(), BorderLayout.SOUTH);
         return panel;
@@ -278,9 +318,19 @@ public class PharmaGoDesktopUI {
         panel.setBackground(PANEL_BG);
 
         salesTable = createTable(new String[]{"ID", "Medicine", "Customer", "Qty", "Price", "Date", "Prescription"});
+        panel.add(createDeleteBar("Delete Selected Sale", event -> handleDeleteSale()), BorderLayout.NORTH);
         panel.add(wrapTable(salesTable), BorderLayout.CENTER);
         panel.add(buildSaleForm(), BorderLayout.SOUTH);
         return panel;
+    }
+
+    private JComponent createDeleteBar(String buttonText, java.awt.event.ActionListener actionListener) {
+        JPanel actionBar = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
+        actionBar.setOpaque(false);
+        JButton deleteButton = createDangerButton(buttonText);
+        deleteButton.addActionListener(actionListener);
+        actionBar.add(deleteButton);
+        return actionBar;
     }
 
     private JComponent buildMedicineForm() {
@@ -426,15 +476,25 @@ public class PharmaGoDesktopUI {
     private JScrollPane wrapTable(JTable table) {
         JScrollPane scrollPane = new JScrollPane(table);
         scrollPane.setBorder(BorderFactory.createLineBorder(new Color(226, 232, 240)));
+        scrollPane.setPreferredSize(new Dimension(1100, 140));
         return scrollPane;
     }
 
     private JButton createPrimaryButton(String text) {
         JButton button = new JButton(text);
         button.setFocusPainted(false);
-        button.setBackground(new Color(191, 219, 254));
-        button.setForeground(new Color(15, 23, 42));
+        button.setBackground(PRIMARY);
+        button.setForeground(Color.BLACK);
         button.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        return button;
+    }
+
+    private JButton createDangerButton(String text) {
+        JButton button = new JButton(text);
+        button.setFocusPainted(false);
+        button.setBackground(new Color(254, 226, 226));
+        button.setForeground(DANGER);
+        button.setFont(new Font("Segoe UI", Font.BOLD, 12));
         return button;
     }
 
@@ -552,6 +612,48 @@ public class PharmaGoDesktopUI {
         }
     }
 
+    private void handleDeleteMedicine() {
+        try {
+            int medicineId = requireSelectedId(medicineTable, "medicine");
+            if (!confirmDeletion("Delete the selected medicine?")) {
+                return;
+            }
+            inventoryService.deleteMedicine(medicineId);
+            refreshAllData();
+            showInfo("Medicine deleted successfully.");
+        } catch (Exception exception) {
+            handleError("Unable to delete medicine", exception);
+        }
+    }
+
+    private void handleDeletePurchase() {
+        try {
+            int purchaseId = requireSelectedId(purchaseTable, "purchase");
+            if (!confirmDeletion("Delete the selected purchase record?")) {
+                return;
+            }
+            inventoryService.deletePurchase(purchaseId);
+            refreshAllData();
+            showInfo("Purchase deleted successfully.");
+        } catch (Exception exception) {
+            handleError("Unable to delete purchase", exception);
+        }
+    }
+
+    private void handleDeleteSale() {
+        try {
+            int saleId = requireSelectedId(salesTable, "sale");
+            if (!confirmDeletion("Delete the selected sale record?")) {
+                return;
+            }
+            inventoryService.deleteSale(saleId);
+            refreshAllData();
+            showInfo("Sale deleted successfully.");
+        } catch (Exception exception) {
+            handleError("Unable to delete sale", exception);
+        }
+    }
+
     private void populateSummary(BusinessSummary summary) {
         medicinesValueLabel.setText(String.valueOf(summary.getTotalMedicines()));
         stockValueLabel.setText(String.valueOf(summary.getTotalUnitsInStock()));
@@ -564,6 +666,7 @@ public class PharmaGoDesktopUI {
     }
 
     private void loadMedicineTable(List<Medicine> medicines) {
+        cachedMedicines = medicines;
         DefaultTableModel model = (DefaultTableModel) medicineTable.getModel();
         model.setRowCount(0);
         for (Medicine medicine : medicines) {
@@ -578,6 +681,34 @@ public class PharmaGoDesktopUI {
                     medicine.getReorderLevel(),
                     ConsoleFormatter.formatDate(medicine.getExpiryDate())
             });
+        }
+    }
+
+    private void filterMedicineTable() {
+        if (medicineTable == null) {
+            return;
+        }
+        String query = medicineSearchField == null ? "" : medicineSearchField.getText().trim().toLowerCase();
+        DefaultTableModel model = (DefaultTableModel) medicineTable.getModel();
+        model.setRowCount(0);
+        for (Medicine medicine : cachedMedicines) {
+            if (query.isEmpty()
+                    || medicine.getMedicineCode().toLowerCase().contains(query)
+                    || medicine.getName().toLowerCase().contains(query)
+                    || medicine.getCategory().toLowerCase().contains(query)
+                    || medicine.getManufacturer().toLowerCase().contains(query)) {
+                model.addRow(new Object[]{
+                        medicine.getMedicineId(),
+                        medicine.getMedicineCode(),
+                        medicine.getName(),
+                        medicine.getCategory(),
+                        medicine.getManufacturer(),
+                        ConsoleFormatter.money(medicine.getUnitPrice()),
+                        medicine.getStockQuantity(),
+                        medicine.getReorderLevel(),
+                        ConsoleFormatter.formatDate(medicine.getExpiryDate())
+                });
+            }
         }
     }
 
@@ -655,6 +786,24 @@ public class PharmaGoDesktopUI {
             throw new IllegalArgumentException(fieldName + " is required.");
         }
         return value;
+    }
+
+    private int requireSelectedId(JTable table, String itemName) {
+        int selectedRow = table.getSelectedRow();
+        if (selectedRow < 0) {
+            throw new IllegalArgumentException("Select a " + itemName + " row first.");
+        }
+        return Integer.parseInt(String.valueOf(table.getValueAt(selectedRow, 0)));
+    }
+
+    private boolean confirmDeletion(String message) {
+        return JOptionPane.showConfirmDialog(
+                frame,
+                message,
+                "Confirm Delete",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.WARNING_MESSAGE
+        ) == JOptionPane.YES_OPTION;
     }
 
     private MedicineItem requireSelectedMedicine(JComboBox<MedicineItem> comboBox, String actionName) {
