@@ -12,19 +12,6 @@ public final class ConsoleFormatter {
     private ConsoleFormatter() {
     }
 
-    public static String titleBlock(String title, String subtitle) {
-        return """
-                ============================================================
-                                %s
-                            %s
-                ============================================================
-                """.formatted(title, subtitle);
-    }
-
-    public static String section(String title) {
-        return "\n-------------------- " + title + " --------------------";
-    }
-
     public static String formatDate(LocalDate date) {
         return DATE_FORMATTER.format(date);
     }

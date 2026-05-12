@@ -35,3 +35,15 @@ CREATE TABLE IF NOT EXISTS sales (
     prescription_required BOOLEAN NOT NULL DEFAULT FALSE,
     FOREIGN KEY (medicine_id) REFERENCES medicines(medicine_id)
 );
+
+CREATE TABLE IF NOT EXISTS users (
+    user_id INT PRIMARY KEY AUTO_INCREMENT,
+    username VARCHAR(60) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    role VARCHAR(10) NOT NULL DEFAULT 'STAFF',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+INSERT IGNORE INTO users (username, password, role) VALUES
+    ('admin', 'admin123', 'ADMIN'),
+    ('staff', 'staff123', 'STAFF');

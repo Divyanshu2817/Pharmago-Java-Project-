@@ -13,20 +13,25 @@ import java.sql.SQLException;
 import java.util.List;
 
 public class InventoryService {
-    private static final int EXPIRY_ALERT_DAYS = 30;
-
     private final MedicineDao medicineDao;
     private final PurchaseDao purchaseDao;
     private final SaleDao saleDao;
+    private final AlertService alertService;
 
-    public InventoryService(MedicineDao medicineDao, PurchaseDao purchaseDao, SaleDao saleDao) {
+    public InventoryService(MedicineDao medicineDao, PurchaseDao purchaseDao, SaleDao saleDao, AlertService alertService) {
         this.medicineDao = medicineDao;
         this.purchaseDao = purchaseDao;
         this.saleDao = saleDao;
+        this.alertService = alertService;
     }
 
     public void addMedicine(Medicine medicine) throws SQLException {
         medicineDao.addMedicine(medicine);
+    }
+
+    public void updateMedicine(Medicine medicine) throws SQLException {
+        getMedicineOrThrow(medicine.getMedicineId());
+        medicineDao.updateMedicine(medicine);
     }
 
     public void deleteMedicine(int medicineId) throws SQLException {
@@ -41,11 +46,11 @@ public class InventoryService {
     }
 
     public List<Medicine> getLowStockMedicines() throws SQLException {
-        return medicineDao.getLowStockMedicines();
+        return alertService.getLowStockMedicines();
     }
 
     public List<Medicine> getExpiringMedicines() throws SQLException {
-        return medicineDao.getExpiringMedicines(EXPIRY_ALERT_DAYS);
+        return alertService.getExpiringMedicines();
     }
 
     public void recordPurchase(Purchase purchase) throws SQLException {
@@ -97,11 +102,11 @@ public class InventoryService {
     public BusinessSummary getBusinessSummary() throws SQLException {
         int totalMedicines = medicineDao.countMedicines();
         int totalUnits = medicineDao.totalUnitsInStock();
-        int lowStockItems = medicineDao.getLowStockMedicines().size();
-        int expiringSoonItems = medicineDao.countExpiringSoon(EXPIRY_ALERT_DAYS);
+        List<Medicine> lowStock = alertService.getLowStockMedicines();
+        int expiringSoonItems = medicineDao.countExpiringSoon(AlertService.EXPIRY_ALERT_DAYS);
         BigDecimal purchaseValue = purchaseDao.totalPurchaseValue();
         BigDecimal salesValue = saleDao.totalSalesValue();
-        return new BusinessSummary(totalMedicines, totalUnits, lowStockItems, expiringSoonItems, purchaseValue, salesValue);
+        return new BusinessSummary(totalMedicines, totalUnits, lowStock.size(), expiringSoonItems, purchaseValue, salesValue);
     }
 
     private Medicine getMedicineOrThrow(int medicineId) throws SQLException {

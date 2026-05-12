@@ -113,6 +113,27 @@ public class MedicineDao {
         }
     }
 
+    public void updateMedicine(Medicine medicine) throws SQLException {
+        String sql = """
+                UPDATE medicines
+                SET medicine_code = ?, name = ?, category = ?, manufacturer = ?,
+                    unit_price = ?, reorder_level = ?, expiry_date = ?
+                WHERE medicine_id = ?
+                """;
+        try (Connection connection = databaseConfig.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, medicine.getMedicineCode());
+            statement.setString(2, medicine.getName());
+            statement.setString(3, medicine.getCategory());
+            statement.setString(4, medicine.getManufacturer());
+            statement.setBigDecimal(5, medicine.getUnitPrice());
+            statement.setInt(6, medicine.getReorderLevel());
+            statement.setDate(7, Date.valueOf(medicine.getExpiryDate()));
+            statement.setInt(8, medicine.getMedicineId());
+            statement.executeUpdate();
+        }
+    }
+
     public void deleteMedicine(int medicineId) throws SQLException {
         String sql = "DELETE FROM medicines WHERE medicine_id = ?";
         try (Connection connection = databaseConfig.getConnection();
